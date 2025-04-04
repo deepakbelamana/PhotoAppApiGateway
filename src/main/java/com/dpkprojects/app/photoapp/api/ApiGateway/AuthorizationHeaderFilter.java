@@ -43,6 +43,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
             //getting authorization headers and jwt token
             String authorizationHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
             String jwtToken = authorizationHeader.replace("Bearer", "");
+            jwtToken=jwtToken.trim();
             //validating jwt token
             if (!isJwtTokenValid(jwtToken)) {
                 return onError(exchange, "JWT token is not valid", HttpStatus.UNAUTHORIZED);
@@ -65,6 +66,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     private boolean isJwtTokenValid(String jwtToken) {
         boolean valid = false;
         String subject = null;
+        Claims claims =null;
         String tokenKey = env.getProperty("token.secret_key");
         byte[] secretKeyBytes = Base64.getEncoder().encode(tokenKey.getBytes());
         SecretKey secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
@@ -73,7 +75,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                 .verifyWith(secretKey)
                 .build();
         try {
-            Claims claims = jwtParser.parseSignedClaims(jwtToken).getPayload();
+           claims = jwtParser.parseSignedClaims(jwtToken).getPayload();
             subject = (String) claims.get("sub");
 
         } catch (Exception ex) {
